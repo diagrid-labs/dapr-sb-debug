@@ -24,18 +24,18 @@ spec:
     spec:
       containers:
       - name: sb-debug
-        image: ordersystem15
+        image: us-central1-docker.pkg.dev/strong-harbor-338418/elia-sb-debug-mirel/orderprocessor:latest
         ports:
         - containerPort: 8080
           protocol: TCP
         env:
         - name: MESSAGE_COUNT
-          value: "200"
+          value: "100"
         - name: SUBSCRIBER_FAIL_RATE
-          value: "0.0"
+          value: "0.5"
         - name: MAX_CONCURRENT_PUBLISHES
           value: "5"
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         readinessProbe:
           httpGet:
             path: /health  
