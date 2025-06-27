@@ -7,4 +7,3 @@ spec:
   routes:
     default: /orders
   pubsubname: orderpubsub
-  deadLetterTopic: dead-letter-orders # Optional: specify a dead-letter topic
