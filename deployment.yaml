@@ -32,7 +32,7 @@ spec:
         - name: MESSAGE_COUNT
           value: "100"
         - name: SUBSCRIBER_FAIL_RATE
-          value: "0.5"
+          value: "0.0"
         - name: MAX_CONCURRENT_PUBLISHES
           value: "5"
         imagePullPolicy: Always
