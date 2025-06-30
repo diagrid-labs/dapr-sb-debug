@@ -104,8 +104,8 @@ This quickstart is adapted from the official Dapr [pub/sub quickstart for C# SDK
       az servicebus queue show \
           --resource-group <YOUR_RG_GROUP>\
           --namespace-name <NS_MAME>> \
-          --name dead-letter-orders \
-          --query countDetails.activeMessageCount  
+          --name orders \
+          --query countDetails.deadLetterMessageCount
     ```
 
 
