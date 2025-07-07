@@ -129,6 +129,13 @@ scopes:
 - sb-debug-consumer
 ```
 
+Apply Components
+```
+# Before deploying consumer, apply components first
+kubectl apply -f pubsub.yaml
+kubectl apply -f subscription.yaml
+```
+
 Deploy Consumer and wait for ready 
 
 ```
@@ -136,8 +143,14 @@ kubectl apply -f ./k8s/consumer/deployment.yaml
 kubectl wait --for=condition=ready pod -l app=sb-debug-consumer --timeout=60s
 ```
 
-Deploy Producer and wait for ready 
+Deploy Producer 
 
 ```
 kubectl apply -f ./k8s/producer/deployment.yaml
+```
+
+Monitor logs after deployment
+```
+kubectl logs deployments/sb-debug-consumer -f  # Consumer logs
+kubectl logs deployments/sb-debug-producer -f 
 ```

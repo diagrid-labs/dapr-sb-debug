@@ -30,7 +30,7 @@ spec:
           protocol: TCP
         env:
         - name: MESSAGE_COUNT
-          value: "100"
+          value: "600"
         - name: MAX_CONCURRENT_PUBLISHES
           value: "5"
         imagePullPolicy: Always
