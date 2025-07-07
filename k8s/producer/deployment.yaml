@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sb-debug-producer
+  labels:
+    app: sb-debug-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sb-debug-producer
+  template:
+    metadata:
+      labels:
+        app: sb-debug-producer
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "sb-debug-producer"
+        dapr.io/log-level: "debug"
+        dapr.io/enable-app-health-check: "true"
+        dapr.io/app-health-check-path: "/health"
+        dapr.io/app-protocol: "http"          
+        dapr.io/app-port: "8080" 
+    spec:
+      containers:
+      - name: sb-debug-producer
+        image: us-central1-docker.pkg.dev/strong-harbor-338418/elia-sb-debug-mirel/orderprocessor-producer:latest
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        env:
+        - name: MESSAGE_COUNT
+          value: "100"
+        - name: MAX_CONCURRENT_PUBLISHES
+          value: "5"
+        imagePullPolicy: Always
+        readinessProbe:
+          httpGet:
+            path: /health  
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 2
