@@ -10,8 +10,6 @@ This quickstart is adapted from the official Dapr [pub/sub quickstart for C# SDK
 
 ## 1. Prerequisites
 
-* **.NET 8 SDK**: For local development.
-* **Dapr CLI**: For local Dapr integration.
 * **Kubernetes Cluster**: With Dapr installed, for K8s deployment.
 * **Azure Service Bus**: An existing Service Bus Namespace and a queue 
     * **Get your Service Bus Connection String**:
@@ -43,40 +41,6 @@ This quickstart is adapted from the official Dapr [pub/sub quickstart for C# SDK
       deadLetterTopic: dead-letter-orders # Messages that exhaust retries will go here.
     ```
 
----
-
-## 2. Run Locally with Dapr
-
-1.  **Go to the project folder:**
-    ```bash
-    cd order-processor
-    ```
-
-2.  **Build & Restore (first time or after code changes):**
-    ```bash
-    dotnet restore
-    dotnet build
-    ```
-
-3.  **Run Scenarios with Dapr:**
-
-    ### Scenario A: Normal Run (No Subscriber Failures)
-    ```bash
-    MESSAGE_COUNT=100 SUBSCRIBER_FAIL_RATE=0.0 MAX_CONCURRENT_PUBLISHES=5 \
-    dapr run --app-id order-processor --log-level debug --resources-path ../components --app-port 7006 -- dotnet run
-    ```
-
-    ### Scenario B: Debugging DLQ Failures
-    ```bash
-    MESSAGE_COUNT=100 SUBSCRIBER_FAIL_RATE=0.1 MAX_CONCURRENT_PUBLISHES=5 \
-    dapr run --app-id order-processor --log-level debug --resources-path ../components --app-port 7006 -- dotnet run
-    ```
-    * `MESSAGE_COUNT`: Total messages.
-    * `SUBSCRIBER_FAIL_RATE`: % of messages to intentionally fail (e.g., `0.1` for 10%).
-    * `MAX_CONCURRENT_PUBLISHES`: Limits concurrent message sends.
-
-4.  **Stop:** Press `Ctrl+C`.
----
 
 ## 3. Run in Kubernetes
 
@@ -146,4 +110,47 @@ Total messages successfully received: 5
 Number of lost messages: 5
 Lost Order IDs: [1, 2, 3, 4, 5]
 -------------------------------
+```
+
+## Option 2: Split Mode (Producer + Consumer)
+Ensure your subscription is `scoped` to the consumer app: 
+
+```yaml
+apiVersion: dapr.io/v2alpha1
+kind: Subscription
+metadata:
+  name: orders-subscription
+spec:
+  topic: orders
+  routes:
+    default: /orders
+  pubsubname: orderpubsub
+scopes:
+- sb-debug-consumer
+```
+
+Apply Components
+```
+# Before deploying consumer, apply components first
+kubectl apply -f pubsub.yaml
+kubectl apply -f subscription.yaml
+```
+
+Deploy Consumer and wait for ready 
+
+```
+kubectl apply -f ./k8s/consumer/deployment.yaml
+kubectl wait --for=condition=ready pod -l app=sb-debug-consumer --timeout=60s
+```
+
+Deploy Producer 
+
+```
+kubectl apply -f ./k8s/producer/deployment.yaml
+```
+
+Monitor logs after deployment
+```
+kubectl logs deployments/sb-debug-consumer -f  # Consumer logs
+kubectl logs deployments/sb-debug-producer -f 
 ```
