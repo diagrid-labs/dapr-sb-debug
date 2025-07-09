@@ -1,0 +1,28 @@
+version: 1
+common:
+  resourcesPath: ./components/
+apps:
+  - appID: sb-debug-producer
+    appDirPath: ./order-processor-producer/
+    appPort: 8080
+    command: ["dotnet", "run"]
+    env:
+      MESSAGE_COUNT: "600"
+      MAX_CONCURRENT_PUBLISHES: "5"
+      ASPNETCORE_URLS: "http://localhost:8080"
+    daprLogLevel: debug
+    enableAppHealthCheck: true
+    appHealthCheckPath: "/health"
+    appProtocol: "http"
+    
+  - appID: sb-debug-consumer
+    appDirPath: ./order-processor-consumer/
+    appPort: 8081
+    command: ["dotnet", "run"]
+    env:
+      SUBSCRIBER_FAIL_RATE: "0.0"
+      ASPNETCORE_URLS: "http://localhost:8081"
+    daprLogLevel: debug
+    enableAppHealthCheck: true
+    appHealthCheckPath: "/health"
+    appProtocol: "http"

@@ -1,34 +1,29 @@
 using System.Text.Json.Serialization;
 using Dapr;
 using Dapr.Client;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Concurrent;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers().AddDapr();
+
 var app = builder.Build();
 
+app.UseRouting();
 app.UseCloudEvents();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapSubscribeHandler();
+    endpoints.MapControllers();
+});
+
 // Health endpoint
 app.MapGet("/health", () => "OK");
 
 // Shared Collections for Tracking Messages 
 var allSentOrderIds = new ConcurrentBag<int>();
-var allReceivedOrderIds = new ConcurrentBag<int>(); 
-
-
-app.MapPost("/orders", [Topic("orderpubsub", "orders")] (Order order) => {
-    var failRate = double.Parse(Environment.GetEnvironmentVariable("SUBSCRIBER_FAIL_RATE") ?? "0.0");
-    var messagesToFailCount = (int)(int.Parse(Environment.GetEnvironmentVariable("MESSAGE_COUNT") ?? "10") * failRate);
-
-    if (order.OrderId <= messagesToFailCount)
-    {
-        Console.Error.WriteLine($"Subscriber FAILED to process: {order} (deterministic failure for DLQ)");
-        return Results.StatusCode(500);
-    }
-
-    allReceivedOrderIds.Add(order.OrderId);
-    Console.WriteLine($"Subscriber received: {order} (SUCCESS)");
-    return Results.Ok(order);
-});
+OrderController.AllReceivedOrderIds = new ConcurrentBag<int>(); 
 
 _ = Task.Run(async () =>
 {
@@ -86,10 +81,10 @@ _ = Task.Run(async () =>
     const int maxConsecutiveSameCount = 5;
     const int checkIntervalMs = 2000;
 
-    while (allReceivedOrderIds.Count < messageCount)
+    while (OrderController.AllReceivedOrderIds.Count < messageCount)
     {
         await Task.Delay(checkIntervalMs);
-        int currentReceivedCount = allReceivedOrderIds.Count;
+        int currentReceivedCount = OrderController.AllReceivedOrderIds.Count;
 
         if (currentReceivedCount == previousReceivedCount)
         {
@@ -114,14 +109,14 @@ _ = Task.Run(async () =>
     Console.WriteLine("\n--- MESSAGE DELIVERY REPORT ---");
 
     var distinctSentCount = allSentOrderIds.Distinct().Count();
-    var distinctReceivedCount = allReceivedOrderIds.Distinct().Count();
+    var distinctReceivedCount = OrderController.AllReceivedOrderIds.Distinct().Count();
 
     Console.WriteLine($"Total messages attempted to publish: {distinctSentCount}");
     Console.WriteLine($"Total messages successfully received: {distinctReceivedCount}");
 
     if (distinctSentCount != distinctReceivedCount)
     {
-        var missingOrderIds = allSentOrderIds.Except(allReceivedOrderIds).OrderBy(id => id).ToList();
+        var missingOrderIds = allSentOrderIds.Except(OrderController.AllReceivedOrderIds).OrderBy(id => id).ToList();
         Console.Error.WriteLine($"\n!!! MESSAGE LOSS DETECTED !!!");
         Console.Error.WriteLine($"Number of lost messages: {missingOrderIds.Count}");
         Console.Error.WriteLine($"Lost Order IDs: [{string.Join(", ", missingOrderIds)}]");
@@ -134,5 +129,29 @@ _ = Task.Run(async () =>
 });
 
 await app.RunAsync();
+
+[ApiController]
+public class OrderController : ControllerBase
+{
+    public static ConcurrentBag<int> AllReceivedOrderIds = new();
+    
+    [Topic("orderpubsub", "orders")]
+    [HttpPost("orders")]
+    public ActionResult<Order> HandleOrder(Order order)
+    {
+        var failRate = double.Parse(Environment.GetEnvironmentVariable("SUBSCRIBER_FAIL_RATE") ?? "0.0");
+        var messagesToFailCount = (int)(int.Parse(Environment.GetEnvironmentVariable("MESSAGE_COUNT") ?? "10") * failRate);
+
+        if (order.OrderId <= messagesToFailCount)
+        {
+            Console.Error.WriteLine($"Subscriber FAILED to process: {order} (deterministic failure for DLQ)");
+            return StatusCode(500);
+        }
+
+        AllReceivedOrderIds.Add(order.OrderId);
+        Console.WriteLine($"Subscriber received: {order} (SUCCESS)");
+        return Ok(order);
+    }
+}
 
 public record Order([property: JsonPropertyName("orderId")] int OrderId);

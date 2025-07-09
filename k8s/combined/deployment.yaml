@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-processor-combined
+  labels:
+    app: order-processor-combined
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-processor-combined
+  template:
+    metadata:
+      labels:
+        app: order-processor-combined
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "order-processor-combined"
+        dapr.io/log-level: "debug"
+        dapr.io/enable-app-health-check: "true"
+        dapr.io/app-health-check-path: "/health"
+        dapr.io/app-protocol: "http"          
+        dapr.io/app-port: "8080"
+        dapr.io/config: "appconfig"
+    spec:
+      containers:
+      - name: order-processor-combined
+        image: order-processor-combined:latest
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        env:
+        - name: MESSAGE_COUNT
+          value: "600"
+        - name: MAX_CONCURRENT_PUBLISHES
+          value: "5"
+        - name: SUBSCRIBER_FAIL_RATE
+          value: "0.0"
+        imagePullPolicy: Never
+        readinessProbe:
+          httpGet:
+            path: /health  
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 2
