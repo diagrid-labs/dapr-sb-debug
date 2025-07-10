@@ -6,6 +6,11 @@ using System.Collections.Concurrent;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers().AddDapr();
+builder.Services.AddHttpLogging(options =>
+   {
+       // Configure options here if needed. For example:
+       // options.LoggingFields = HttpLoggingFields.RequestHeaders | HttpLoggingFields.ResponseHeaders;
+   });
 
 var app = builder.Build();
 
@@ -13,6 +18,7 @@ app.MapGet("/health", () => "OK");
 
 app.UseRouting();
 app.UseCloudEvents();
+app.UseHttpLogging();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapSubscribeHandler();
@@ -26,7 +32,7 @@ public class OrderController : ControllerBase
 {
     private static readonly ConcurrentBag<int> allReceivedOrderIds = new();
     
-    [Topic("pubsub", "orders")]
+    [Topic("orderpubsub", "orders")]
     [HttpPost("orders")]
     public ActionResult<Order> HandleOrder(Order order)
     {
