@@ -7,11 +7,10 @@ apps:
     appPort: 8080
     command: ["dotnet", "run"]
     env:
-      MESSAGE_COUNT: "600"
-      MAX_CONCURRENT_PUBLISHES: "1"
+      MESSAGE_COUNT: "1000"
+      MAX_CONCURRENT_PUBLISHES: "10"
       SUBSCRIBER_FAIL_RATE: "0.0"
       ASPNETCORE_URLS: "http://localhost:8080"
     daprLogLevel: debug
-    enableAppHealthCheck: true
     appHealthCheckPath: "/health"
     appProtocol: "http"

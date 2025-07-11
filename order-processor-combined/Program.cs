@@ -135,7 +135,6 @@ public class OrderController : ControllerBase
 {
     public static ConcurrentBag<int> AllReceivedOrderIds = new();
     
-    [Topic("orderpubsub", "orders")]
     [HttpPost("orders")]
     public ActionResult<Order> HandleOrder(Order order)
     {

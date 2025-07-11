@@ -21,17 +21,18 @@ spec:
         dapr.io/app-health-check-path: "/health"
         dapr.io/app-protocol: "http"          
         dapr.io/app-port: "8080" 
+        dapr.io/config: "tracing"
     spec:
       containers:
       - name: sb-debug-consumer
-        image: us-central1-docker.pkg.dev/strong-harbor-338418/elia-sb-debug-mirel/orderprocessor-consumer:latest
+        image: sb-debug-consumer:latest
         ports:
         - containerPort: 8080
           protocol: TCP
         env:
         - name: SUBSCRIBER_FAIL_RATE
           value: "0.0"
-        imagePullPolicy: Always
+        imagePullPolicy: Never
         readinessProbe:
           httpGet:
             path: /health  

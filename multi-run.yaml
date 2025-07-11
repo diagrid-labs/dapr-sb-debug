@@ -11,8 +11,6 @@ apps:
       MAX_CONCURRENT_PUBLISHES: "1"
       ASPNETCORE_URLS: "http://localhost:8080"
     daprLogLevel: debug
-    daprdLogDestination: console
-    appProtocol: "http"     
     
   - appID: sb-debug-consumer
     appDirPath: ./order-processor-consumer/
@@ -22,5 +20,3 @@ apps:
       SUBSCRIBER_FAIL_RATE: "0.0"
       ASPNETCORE_URLS: "http://localhost:8081"
     daprLogLevel: debug
-    daprdLogDestination: console
-    appProtocol: "http"

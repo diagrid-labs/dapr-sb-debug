@@ -32,7 +32,6 @@ public class OrderController : ControllerBase
 {
     private static readonly ConcurrentBag<int> allReceivedOrderIds = new();
     
-    [Topic("orderpubsub", "orders")]
     [HttpPost("orders")]
     public ActionResult<Order> HandleOrder(Order order)
     {
